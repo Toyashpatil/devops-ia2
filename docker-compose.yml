@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  model_server:
+    build:
+      context: ./python
+      dockerfile: Dockerfile.model
+    container_name: model_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python/model.pkl:/app/model.pkl:ro
+      - ./python/model_meta.pkl:/app/model_meta.pkl:ro
+
+  router:
+    build:
+      context: ./node/router
+    container_name: router
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_URL=http://model_server:8000/predict
+    depends_on:
+      - model_server
+      - psp_axis
+      - psp_hdfc
+      - psp_sbi
+
+  psp_axis:
+    build:
+      context: ./node/psp
+    container_name: psp_axis
+    ports:
+      - "9000:9000"
+    environment:
+      - BASE_FAIL=0.045
+
+  psp_hdfc:
+    build:
+      context: ./node/psp
+    container_name: psp_hdfc
+    ports:
+      - "9001:9001"
+    environment:
+      - BASE_FAIL=0.02
+
+  psp_sbi:
+    build:
+      context: ./node/psp
+    container_name: psp_sbi
+    ports:
+      - "9002:9002"
+    environment:
+      - BASE_FAIL=0.03
